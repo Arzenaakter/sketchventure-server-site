@@ -60,6 +60,26 @@ app.post('/jwt', (req,res)=>{
 })
 
 
+
+
+// use verifyJWT before using verifyAdmin
+const verifyAdmin = async ( req, res,next) => {
+  const email = req.decoded.email;
+  const query = { email: email}
+  const user = await userCollection.findOne(query);
+  if(user?.role !=='admin'){
+    return res.status(403).send({error:true, message:'forbidden message'});
+
+  }
+  next();
+}
+
+
+
+
+
+
+
     // insert data from user
     app.post('/users', async(req,res)=>{
         const users = req.body;
@@ -77,8 +97,36 @@ app.post('/jwt', (req,res)=>{
     })
 
 // get user all data
-app.get('/users', async(req,res)=>{
+app.get('/users',verifyJWT,verifyAdmin, async(req,res)=>{
   const result = await userCollection.find().toArray()
+  res.send(result)
+})
+
+
+// secure admin route
+app.get('/users/admin/:email' ,verifyJWT, async(req,res)=>{
+  const email = req.params.email;
+  if(req.decoded.email !==email){
+    res.send({admin:false})
+  }
+
+
+  const query = {email :email};
+  const user = await userCollection.findOne(query)
+  const result = {admin:user?.role === 'admin'}
+  res.send(result)
+})
+// secure instructor route
+app.get('/users/instructor/:email' ,verifyJWT, async(req,res)=>{
+  const email = req.params.email;
+  if(req.decoded.email !==email){
+    res.send({instructor:false})
+  }
+
+
+  const query = {email :email};
+  const user = await userCollection.findOne(query)
+  const result = {instructor:user?.role === 'instructor'}
   res.send(result)
 })
 

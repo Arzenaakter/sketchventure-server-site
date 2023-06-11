@@ -192,6 +192,36 @@ if(email !== decodedEmail){
   res.send(result)
 })
 
+// for approve
+app.patch('/addClasses/approve/:id' , async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const updateStatus ={
+    $set:{
+      status:'approve'
+    },
+  };
+  const result = await classCollection.updateOne(query,updateStatus);
+  res.send(result)
+})
+
+
+// for deny
+app.patch('/addClasses/deny/:id' , async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const updateStatus ={
+    $set:{
+      status:'deny'
+    },
+  };
+  const result = await classCollection.updateOne(query,updateStatus);
+  res.send(result)
+})
+
+
+
+
 
 
 

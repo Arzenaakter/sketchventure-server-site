@@ -76,10 +76,6 @@ const verifyAdmin = async ( req, res,next) => {
 
 
 
-
-
-
-
     // insert data from user
     app.post('/users', async(req,res)=>{
         const users = req.body;
@@ -103,13 +99,13 @@ app.get('/users',verifyJWT,verifyAdmin, async(req,res)=>{
 })
 
 
+
 // secure admin route
 app.get('/users/admin/:email' ,verifyJWT, async(req,res)=>{
   const email = req.params.email;
   if(req.decoded.email !==email){
     res.send({admin:false})
   }
-
 
   const query = {email :email};
   const user = await userCollection.findOne(query)

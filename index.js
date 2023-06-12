@@ -5,9 +5,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config()
 
+
 // middleware
 app.use(cors())
 app.use(express.json())
+
 
 // verify  token
 const verifyJWT = (req, res,next) =>{
@@ -67,7 +69,7 @@ const verifyAdmin = async ( req, res,next) => {
   const email = req.decoded.email;
   const query = { email: email}
   const user = await userCollection.findOne(query);
-  if(user?.role !=='admin'){
+  if(user?.role !=='admin' ){
     return res.status(403).send({error:true, message:'forbidden message'});
 
   }
@@ -99,6 +101,25 @@ app.get('/users',verifyJWT,verifyAdmin, async(req,res)=>{
 })
 
 
+// get all instructor 
+app.get('/users/instructors', async(req, res) => {
+  const result = await userCollection.find({role:'instructor'}).toArray()
+  res.send(result)
+  
+});
+
+// 
+
+
+
+
+
+
+
+
+
+
+
 
 // secure admin route
 app.get('/users/admin/:email' ,verifyJWT, async(req,res)=>{
@@ -118,8 +139,6 @@ app.get('/users/instructor/:email' ,verifyJWT, async(req,res)=>{
   if(req.decoded.email !==email){
     res.send({instructor:false})
   }
-
-
   const query = {email :email};
   const user = await userCollection.findOne(query)
   const result = {instructor:user?.role === 'instructor'}
@@ -218,7 +237,29 @@ app.patch('/addClasses/deny/:id' , async(req,res)=>{
   const result = await classCollection.updateOne(query,updateStatus);
   res.send(result)
 })
+// for feedback
+app.put('/addClasses/feedback/:id' , async(req,res)=>{
+  const id = req.params.id;
+  console.log(id);
+  const feedBackData = req.body;
+  const query = {_id: new ObjectId(id)}
+  const options = { upsert: true };
+  const updateFeedBack ={
+    $set:{
+      feedback:feedBackData.feedback
+    },
+  };
+  const result = await classCollection.updateOne(query,updateFeedBack,options);
+  res.send(result)
+})
 
+// for update my classses 
+app.put('/addClasses/myclass/:id' , async(req,res)=>{
+  const id = req.params.id;
+  console.log(id);
+
+})
+  
 
 
 

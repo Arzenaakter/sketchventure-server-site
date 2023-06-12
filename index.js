@@ -51,8 +51,9 @@ async function run() {
     await client.connect();
 
 
-    const userCollection = client.db("SummerCampDB").collection('users')
-    const classCollection = client.db("SummerCampDB").collection('classes')
+    const userCollection = client.db("SummerCampDB").collection('users');
+    const classCollection = client.db("SummerCampDB").collection('classes');
+    const selectedClassCollection = client.db("SummerCampDB").collection('SelectedClasses')
 
 // jwt
 app.post('/jwt', (req,res)=>{
@@ -108,17 +109,16 @@ app.get('/users/instructors', async(req, res) => {
   
 });
 
-// 
+// all classes
+app.get('/AllClasses', async(req,res)=>{
+  const result = await classCollection.find({status:'approve'}).toArray()
+  res.send(result)
+})
 
-
-
-
-
-
-
-
-
-
+app.get('/Allusers', async(req,res)=>{
+  const result = await userCollection.find().toArray();
+  res.send(result)
+})
 
 
 // secure admin route
@@ -259,7 +259,13 @@ app.put('/addClasses/myclass/:id' , async(req,res)=>{
   console.log(id);
 
 })
-  
+  // selected class collection
+  app.post('/selectedClasses' , async(req,res)=>{
+    const classes = req.body;
+    console.log(classes);
+    const result = await selectedClassCollection.insertOne(classes);
+    res.send(result)
+  })
 
 
 

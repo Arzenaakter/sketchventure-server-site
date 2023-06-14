@@ -125,7 +125,7 @@ app.get('/AllClasses', async(req,res)=>{
 app.get('/Allusers/:email',  async(req,res)=>{
   const email = req.params.email;
   const result = await userCollection.find({email}).toArray();
-  // console.log(result);
+  
   res.send(result)
 })
 
@@ -247,7 +247,7 @@ app.patch('/addClasses/deny/:id' , async(req,res)=>{
 // for feedback
 app.put('/addClasses/feedback/:id' , async(req,res)=>{
   const id = req.params.id;
-  console.log(id);
+
   const feedBackData = req.body;
   const query = {_id: new ObjectId(id)}
   const options = { upsert: true };
@@ -269,7 +269,7 @@ app.put('/addClasses/feedback/:id' , async(req,res)=>{
   // selected class collection
   app.post('/selectedClasses' , async(req,res)=>{
     const classes = req.body;
-    console.log(classes);
+   
     const result = await selectedClassCollection.insertOne(classes);
     res.send(result)
   })

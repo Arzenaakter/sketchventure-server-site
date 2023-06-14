@@ -261,11 +261,11 @@ app.put('/addClasses/feedback/:id' , async(req,res)=>{
 })
 
 // for update my classses  todo
-app.put('/addClasses/myclass/:id' , async(req,res)=>{
-  const id = req.params.id;
-  console.log(id);
+// app.put('/addClasses/myclass/:id' , async(req,res)=>{
+//   const id = req.params.id;
+//   console.log(id);
 
-})
+// })
   // selected class collection
   app.post('/selectedClasses' , async(req,res)=>{
     const classes = req.body;
@@ -308,8 +308,6 @@ app.post('/create-payment-intent', async(req,res)=>{
 
 })
 // payment
-
-
 app.post('/payments', verifyJWT, async (req, res) => {
   const payment = req.body;
   const insertedResult = await paymentsCollection.insertOne(payment);

@@ -1,9 +1,13 @@
 const express = require('express');
 const cors = require('cors')
 const jwt = require('jsonwebtoken');
+
+// const stripe = require('stripe')('sk_test_51NIQ3zGuEDjMQT2uj54lJ1u5uNczopceRRU5zjNWMc8N5HmgAp0GPG1ZDFAMP0uIWI29Ilboss1WDDzNq01k6bvi00UYlLMgdJ')
 const app = express();
+require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
-require('dotenv').config()
+
 
 
 // middleware
@@ -48,12 +52,14 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+
+    // await client.connect();
 
 
     const userCollection = client.db("SummerCampDB").collection('users');
     const classCollection = client.db("SummerCampDB").collection('classes');
-    const selectedClassCollection = client.db("SummerCampDB").collection('SelectedClasses')
+    const selectedClassCollection = client.db("SummerCampDB").collection('SelectedClasses');
+    const paymentsCollection = client.db("SummerCampDB").collection('payments');
 
 // jwt
 app.post('/jwt', (req,res)=>{
@@ -115,8 +121,11 @@ app.get('/AllClasses', async(req,res)=>{
   res.send(result)
 })
 
-app.get('/Allusers', async(req,res)=>{
-  const result = await userCollection.find().toArray();
+// get all user role for select button
+app.get('/Allusers/:email',  async(req,res)=>{
+  const email = req.params.email;
+  const result = await userCollection.find({email}).toArray();
+  // console.log(result);
   res.send(result)
 })
 
@@ -192,8 +201,6 @@ app.get('/addClasses', async(req,res)=>{
 // get specific user
 app.get('/addClasses/:email', verifyJWT,  async(req,res)=>{
   const email = req.params.email;
-
-
  
   if(!email){
     res.send([]);
@@ -253,7 +260,7 @@ app.put('/addClasses/feedback/:id' , async(req,res)=>{
   res.send(result)
 })
 
-// for update my classses 
+// for update my classses  todo
 app.put('/addClasses/myclass/:id' , async(req,res)=>{
   const id = req.params.id;
   console.log(id);
@@ -266,10 +273,76 @@ app.put('/addClasses/myclass/:id' , async(req,res)=>{
     const result = await selectedClassCollection.insertOne(classes);
     res.send(result)
   })
+  // selected class get
+  app.get('/mySelectedClass', async(req,res)=>{
+    const email = req.query.email;
+   if(!email){
+    res.send([])
+   }
+    const query = {email : email}
+    const result = await selectedClassCollection.find(query).toArray()
+    res.send(result);
+
+  })
+// Delete selected class 
+  app.delete('/mySelectedClass/:id', async(req,res)=>{
+    const id = req.params.id;
+    const query = {_id : new ObjectId(id)}
+    const result = await selectedClassCollection.deleteOne(query);
+    res.send(result);
+  })
+  
+// crete payment
+app.post('/create-payment-intent', async(req,res)=>{
+  const {price} = req.body;
+  const amount = price*100;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: 'usd',
+    payment_method_types : ['card']
+  });
+  res.send({
+    clientSecret :paymentIntent.client_secret
+  })
+
+})
+// payment
+
+
+app.post('/payments', verifyJWT, async (req, res) => {
+  const payment = req.body;
+  const insertedResult = await paymentsCollection.insertOne(payment);
+
+  const query = { _id: new ObjectId(payment.std_id) };
+  const deleteResult = await selectedClassCollection.deleteOne(query);
+
+  const classQuery = { _id: new ObjectId(payment.selectedClass_id), availableSeats: { $gt: 0 } };
+ 
+    const classUpdateResult = await classCollection.updateOne(classQuery, { 
+      $inc: { 
+        availableSeats: -1, // Decrease available seats by 1
+        enrolledStudent: 1 // Increase enrolled seats by 1
+      }
+    })
+
+    res.send({insertedResult,deleteResult,classUpdateResult})
+
+   
+});
 
 
 
 
+
+
+// get api for payment history
+app.get('/payment-history/:email', async(req,res)=>{
+  const email = req.params.email;
+  const query ={email : email}
+  const result = await paymentsCollection.find(query).toArray()
+  res.send(result)
+})
 
 
     // Send a ping to confirm a successful connection
